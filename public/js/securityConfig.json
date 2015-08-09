@@ -1,0 +1,4 @@
+{
+	"encrypt_alg" : "rc4",
+	"key" : "thisismykey"
+}
