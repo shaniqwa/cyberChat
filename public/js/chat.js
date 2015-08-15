@@ -2,6 +2,20 @@
 
 $(function(){
 
+	if (!cchat.enc) {
+		throw 'Please load encryption module first';
+	}
+
+	var encryptionAlgorithm, encryptionKey, checksumAlgorithm, checksumKey;
+
+	cchat.config.onload(function () {
+		encryptionAlgorithm = cchat.config.get.encryption.alg();
+		encryptionKey = cchat.config.get.encryption.key();
+		checksumAlgorithm = cchat.config.get.checksum.alg();
+		checksumKey = cchat.config.get.checksum.key();
+	});
+
+
 	var myKey = genKey(26);
 	console.log("my generated key: " + myKey);
 	var myKey = "thisismykey";
@@ -175,22 +189,20 @@ $(function(){
 
 	//DATA RECIEVED FROM SERVER !!! (DECRYPT)
 	socket.on('receive', function(data){
-		
 		// console.log("encrypted msg with rc4: " + data.msg);
-
 		//run rc4 to decrypt the recived msg
-		data.msg = rc4(myKey,data.msg);
+		data.msg = cchat.enc[encryptionAlgorithm](encryptionKey,data.msg);
 		//calculate hmac md5 to verify the msg is authentic
-		var md5 = hmac_md5(myKey,data.msg);
-		console.log(md5);
-		//the md5 recived 
-		console.log("check: " + data.check);
-		//compare
-		if(md5 != data.check){
-			alert("Warning: This msg might not be authentic!!");
+		if(checksumAlgorithm){
+			var checksum = cchat.enc[checksumAlgorithm](checksumKey,data.msg);
+			console.log(checksum);
+			//the checksum recived 
+			console.log("check: " + data.check);
+			//compare
+			if(checksum != data.check){
+				alert("Warning: This msg might not be authentic!!");
+			}
 		}
-
-
 
 		showMessage('chatStarted');
 
@@ -211,7 +223,7 @@ $(function(){
 	});
 
 	chatForm.on('submit', function(e){
-
+		
 		e.preventDefault();
 
 		// Create a new chat message and display it directly
@@ -220,12 +232,13 @@ $(function(){
 		if(textarea.val().trim().length) {
 			createChatMessage(textarea.val(), name, img, moment());
 			scrollToBottom();
+		
 
 			//SEND MSG (ENCRYPT)
 			// Send the message to the other person in the chat
-			var check = hmac_md5(myKey,textarea.val());
+			var check = cchat.enc[checksumAlgorithm](checksumKey,textarea.val());
 			console.log(check);
-			socket.emit('msg', {check: check, msg: rc4(myKey,textarea.val()), user: name, img: img});
+			socket.emit('msg', {check: check, msg: cchat.enc[encryptionAlgorithm](encryptionKey,textarea.val()), user: name, img: img});
 			}
 		textarea.val(""); // Empty the textarea
 	});

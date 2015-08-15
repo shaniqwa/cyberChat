@@ -1,3 +1,9 @@
+var cchat = cchat || {};
+
+cchat.enc = {
+    rc4: rc4,
+    hmac_md5: hmac_md5
+};
 
 //RC4 
 function rc4(key, str) {
