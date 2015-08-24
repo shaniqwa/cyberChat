@@ -6,14 +6,24 @@ $(function(){
 		throw 'Please load encryption module first';
 	}
 
-	var encryptionAlgorithm, encryptionKey, checksumAlgorithm, checksumKey;
+    var encryptionAlgorithm, encryptionKey, checksumAlgorithm, checksumKey;
+    var encryptionKeyConfigValue, checksumKeyConfigValue, rsaPublicKey, rsaPrivateKey;
+    var matePublicRSAKey;
 
-	cchat.config.onload(function () {
-		encryptionAlgorithm = cchat.config.get.encryption.alg();
-		encryptionKey = cchat.config.get.encryption.key();
-		checksumAlgorithm = cchat.config.get.checksum.alg();
-		checksumKey = cchat.config.get.checksum.key();
-	});
+    var isChatInitiator;
+
+    cchat.config.onload(function () {
+        encryptionAlgorithm = cchat.config.get.encryption.alg();
+        encryptionKeyConfigValue = cchat.config.get.encryption.key();
+        checksumAlgorithm = cchat.config.get.checksum.alg();
+        checksumKeyConfigValue = cchat.config.get.checksum.key();
+
+        rsaPrivateKey = cchat.enc.generateRSAPrivateKey(1028);
+        rsaPublicKey = cchat.enc.generateRSAKey(rsaPrivateKey);
+
+        encryptionKey = getKey(encryptionKeyConfigValue);
+        checksumKey = getKey(checksumKeyConfigValue);
+    });
 
 
 	var myKey = genKey(26);
@@ -60,6 +70,33 @@ $(function(){
 		leftImage = $("#leftImage"),
 		noMessagesImage = $("#noMessagesImage");
 
+
+    function shouldUseRSAForKeySwap(keyConfigValue) {
+        return keyConfigValue === '*';
+    }
+
+    function getKey(keyConfigValue) {
+        if (shouldUseRSAForKeySwap(keyConfigValue)) {
+            return cchat.enc.genKey(128);
+        }
+
+        return keyConfigValue;
+    }
+
+    socket.on('onRSASwap', function (data) {
+        matePublicRSAKey = data.rsaPublicKey;
+        if (isChatInitiator) {
+            socket.emit('onKeySwap', {
+                encryptionKey: cchat.enc.rsaEncrypt(encryptionKey, matePublicRSAKey),
+                checksumKey: cchat.enc.rsaEncrypt(checksumKey, matePublicRSAKey)
+            });
+        }
+    });
+
+    socket.on('onKeySwap', function (data) {
+        encryptionKey = cchat.enc.rsaDecrypt(data.encryptionKey, rsaPrivateKey);
+        checksumKey = cchat.enc.rsaDecrypt(data.checksumKey, rsaPrivateKey);
+    });
 
 	// on connection to server get the id of person's room
 	socket.on('connect', function(){
@@ -150,14 +187,13 @@ $(function(){
 		if(data.boolean && data.id == id) {
 
 			chats.empty();
-
-			if(name === data.users[0]) {
-
-				showMessage("youStartedChatWithNoMessages",data);
+            isChatInitiator = name === data.users[0];
+            if(isChatInitiator) {
+                showMessage("youStartedChatWithNoMessages",data);
 			}
 			else {
-
 				showMessage("heStartedChatWithNoMessages",data);
+                socket.emit('onRSASwap', {rsaPublicKey: rsaPublicKey})
 			}
 
 			chatNickname.text(friend);

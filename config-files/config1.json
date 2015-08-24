@@ -2,7 +2,7 @@
 	"encryption": {
 		"alg": "rc4",
 		"key": {
-			"value": "abc",
+			"value": "*",
 			"method": "rsa"
 		}
 	},

@@ -30,6 +30,9 @@ cchat.config = (function  () {
 			onLoadCallback = callback;
 		},
 		get: {
+			all: function () {
+				return encryptionConfig.userData;
+			},
 			encryption: {
 				alg: function (defaultAlgorithm) {
 					return encryptionConfig.userData.encryption.alg || defaultAlgorithm;

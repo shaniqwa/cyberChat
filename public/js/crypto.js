@@ -2,11 +2,27 @@ var cchat = cchat || {};
 
 cchat.enc = {
     rc4: rc4,
-    hmac_md5: hmac_md5
+    hmac_md5: hmac_md5,
+    genKey: genKey,
+    generateRSAPrivateKey: generateRSAPrivateKey,
+    generateRSAKey: generateRSAPublicKeyString,
+    rsaEncrypt: cryptico.encrypt,
+    rsaDecrypt: cryptico.decrypt
+
 };
 
+cchat.rsaPhrase = 'This is just a phrase';
+
+function generateRSAPrivateKey(bits) {
+    return cryptico.generateRSAKey(cchat.rsaPhrase, bits);
+}
+
+function generateRSAPublicKeyString(privateKey) {
+    return cryptico.publicKeyString(privateKey);
+}
+
 //RC4 
-function rc4(key, str) {
+function rc4(key, str)  {
     var s = [], j = 0, x, res = '';
     for (var i = 0; i < 256; i++) {
         s[i] = i;
@@ -192,6 +208,15 @@ function binl2rstr(input) {
 }
 
 
+function genKey(length) {
+    var ret = "";
+    while (ret.length < length) {
+        ret += Math.random().toString(16).substring(2);
+    }
+
+    return ret.substring(0,length);
+}
+
 //Convert a raw string to an array of little-endian words
 //Characters >255 have their high-byte silently ignored.
 function rstr2binl(input) {
@@ -220,4 +245,5 @@ function rstr2hex(input) {
     }
     return output;
 }
+
 
