@@ -3,8 +3,7 @@ var cchat = cchat || {};
 cchat.config = (function  () {
 
 	var encryptionConfig = {};
-	var configObject = {};
-	var onloadCallback;
+	var onLoadCallback;
 
 	function changeEncryptionConfig(e) {
 		var fileInput = e.target;
@@ -12,8 +11,8 @@ cchat.config = (function  () {
 		var reader = new FileReader();
 		reader.addEventListener('load', function readEncryptConfig(readEventData) {
 			encryptionConfig.userData = JSON.parse(readEventData.target.result);
-			if (onloadCallback) {
-				onloadCallback();
+			if (onLoadCallback) {
+				onLoadCallback();
 			}
 		}, false);
 
@@ -24,12 +23,11 @@ cchat.config = (function  () {
 
 	for (var i = configFileInputElems.length - 1; i >= 0; i--) {
 		configFileInputElems[i].addEventListener('change', changeEncryptionConfig, false);
-	};
+	}
 
-
-	var configObj = {
+	return {
 		onload: function (callback) {
-			onloadCallback = callback;
+			onLoadCallback = callback;
 		},
 		get: {
 			encryption: {
@@ -47,18 +45,16 @@ cchat.config = (function  () {
 			checksum: {
 				alg: function (defaultAlgorithm) {
 					return encryptionConfig.userData.checksum.alg || defaultAlgorithm;
-				}, 
+				},
 				key: function () {
 					var fileKey = encryptionConfig.userData.checksum.key;
 					if (fileKey !== '*') {
 						return fileKey.value;
 					}
-					return fileKey;	
+					return fileKey;
 				}
 			}
 		}
 	};
-
-	return configObj;
 
 }());

@@ -1,0 +1,16 @@
+{
+	"encryption": {
+		"alg": "rc4",
+		"key": {
+			"value": "abc",
+			"method": "rsa"
+		}
+	},
+	"checksum": {
+		"alg": "hmac_md5",
+		"key": {
+			"value": "abc",
+			"method": "rsa"
+		}
+	}
+}
